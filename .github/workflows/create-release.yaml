@@ -21,7 +21,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+        git fetch --depth=1 origin +refs/tags/*:refs/tags/* || true
         if [ $(git tag | wc -l) -eq 0 ]; then
           echo "No tags found, setting initial tag to v1.0.0"
           git tag v1.0.0

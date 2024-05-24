@@ -7,8 +7,8 @@
     <PackageId>jmsudar.DotNet.Xml</PackageId>
     <Version>1.0.0</Version>
     <Authors>JMSudar</Authors>
-    <Description>PLACEHOLDER</Description>
-    <PackageTags>PLACEHOLDER</PackageTags>
+    <Description>.NET 6 native utilities for XML object manipulation</Description>
+    <PackageTags>xml;serialization;deserialization</PackageTags>
     <RepositoryUrl>git@github.com:jmsudar/DotNet.Xml.git</RepositoryUrl>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <PackageProjectUrl>git@github.com:jmsudar/DotNet.Xml.git</PackageProjectUrl>

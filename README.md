@@ -1,44 +1,60 @@
-# dotnet-library-template
+# jmsudar.DotNet.Xml
 
-This template repository allows you to quickly create a .NET library project with minimal clutter and zero third-party (defined here as non-DotNet Framework) libraries. This is meant to be used as an alternative to project creation via Visual Studio's built in project generation, suitable for projects where the extra abstraction that VS introduces is not required. It can also be used to generate a solution project if you do not have access to Visual Studio, such as if you prefer to edit via Vim.
+jmsudar.DotNet.Xml is a .NET library providing efficient and easy-to-use XML serialization and deserialization methods with no external third-party dependencies.
 
-# Structure
+## Features
 
-Library repos created with this template have the following characteristics
-- Minimal clutter: when initialized, this repo will contain a `src` directory with two subdirectories: one for methods and one for unit tests, each containing a single placeholder code file and .csproj file. No unnecessary or unneeded files created as part of the `dotnet new` command will persist.
-- CI/CD via GitHub Actions: the repo comes pre-provisioned with a `.github/workflows` directory and will handle new version tagging, changelog generation, release creation, unit testing for CI, and publishing to nuget via CD.
-- Utility files: The repo comes pre-provisioned with a .gitignore file, GPL-3 license, and this README for you to replace.
+- Robust XML serialization and deserialization.
+- Support for serializing to and deserializing from both strings and files.
+- Integration of XML namespaces during serialization.
+- Custom exception handling for detailed error feedback during serialization and deserialization.
 
-# Usage
+## Getting Started
 
-To use this repo, create a repo in GitHub selecting this as your template. Clone the repo locally, then run `./INITIALIZE_REPOSITORY.sh <project-name> <author-name>`. These two arguments will replace placeholder tect used to pre-populate elements such as the property information in the primary class's .csproj file, which will ensure a rich nuget publish.
+### Installation
 
-The initialization script will run, then delete itself, leaving you with a clean repository with the following structure:
+To install the jmsudar.DotNet.Json library, use the following NuGet command:
 
-.
+```
+dotnet add package jmsudar.DotNet.Xml
+```
 
-|_.github/workflows
+Alternately, find the file through the NuGet explorer in Visual Studio.
 
-|__create-release.yaml
+## Usage
 
-|_src
+Here's a quick example to get you started:
 
-|__project-name
+```csharp
+using System;
+using jmsudar.DotNet.Xml;
 
-|___project-name.cs
+public class Program
+{
+    public class ExampleObject
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+    }
 
-|___project-name.csproj
+    public static void Main()
+    {
+        var myObject = new ExampleObject { Name = "Jane Doe", Age = 29 };
+        string xmlString = XML.Serialize(myObject);
+        Console.WriteLine(xmlString);
 
-|__project-name.Tests
+        var deserializedObject = XML.Deserialize<ExampleObject>(xmlString);
+        Console.WriteLine($"Name: {deserializedObject.Name}, Age: {deserializedObject.Age}");
+    }
+}
+```
 
-|___project-name.Test.cs
+## License
 
-|___project-name.Test.csproj
+This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) file for details.
 
-|_.gitignore
+## Contact
 
-|_LICENSE
+JMSudar - [code.jmsudar@gmail.com](mailto:code.jmsudar@gmail.com)
 
-|_project-name.sln
-
-You then simply need to write your class and unit tests, provision your GitHub secrets, and check your work back in. The PR and merge-hook GitHub actions will run, leaving you with an easy to work and publish project that auto-publishes to nuget!
+Project Link - [https://github.com/jmsudar/DotNet-XML](https://github.com/jmsudar/DotNet-XML)
