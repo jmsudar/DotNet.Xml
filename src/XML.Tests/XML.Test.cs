@@ -126,8 +126,50 @@ public class XMLTests
         File.Delete(filePath);
     }
 
+    [TestMethod]
+    public void ProcessXmlBlockFromFile_ValidManipulation_UpdatesXml()
+    {
+        string filePath = Path.GetTempFileName();
+        string xml = @"<Root><TestObject><Name>Test</Name><Value>123</Value></TestObject></Root>";
+        File.WriteAllText(filePath, xml);
+
+        void ManipulateObject(TestObject? obj)
+        {
+            if (obj != null)
+            {
+                obj.Name = "Updated";
+            }
+        }
+
+        XML.ProcessXmlBlockFromFile<TestObject>(filePath, ManipulateObject);
+
+        string updatedContent = File.ReadAllText(filePath);
+        StringAssert.Contains(updatedContent, "<Name>Updated</Name>");
+
+        File.Delete(filePath);
+    }
+
+    [TestMethod]
+    public void ExtractXmlBlock_WithValidXmlBlock_ReturnsCorrectSubstring()
+    {
+        string xml = @"<Root><TestObject><Name>Test</Name><Value>123</Value></TestObject></Root>";
+        string? block = XML.ExtractXmlBlock(xml, "TestObject");
+
+        Assert.IsNotNull(block);
+        StringAssert.Contains(block, "<TestObject><Name>Test</Name><Value>123</Value></TestObject>");
+    }
+
+    [TestMethod]
+    public void ExtractXmlBlock_WithMissingXmlBlock_ReturnsNull()
+    {
+        string xml = @"<Root><TestObject><Name>Test</Name><Value>123</Value></TestObject></Root>";
+        string? block = XML.ExtractXmlBlock(xml, "NonExistentObject");
+
+        Assert.IsNull(block);
+    }
+
     //Re-enable at the end of testing
-    #pragma warning restore CS8600 // Suppressing CS8600
-    #pragma warning restore CS8602 // Suppressing CS8602
-    #pragma warning restore CS8629 // Suppressing CS8629
+#pragma warning restore CS8600 // Suppressing CS8600
+#pragma warning restore CS8602 // Suppressing CS8602
+#pragma warning restore CS8629 // Suppressing CS8629
 }

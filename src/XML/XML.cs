@@ -123,6 +123,63 @@ namespace jmsudar.DotNet.Xml
                 throw new XmlDeserializationException($"IO error during deserialization from file '{filePath}'.", ex.InnerException);
             }
         }
+
+        /// <summary>
+        /// Extracts an XML substring from an XML file and manipulates its object representation
+        /// </summary>
+        /// <typeparam name="T">The target XML object you want to manipulate</typeparam>
+        /// <param name="filePath">The path to your target XML file</param>
+        /// <param name="manipulateObject">The object manipulation you wish to perform</param>
+        /// <exception cref="InvalidOperationException"></exception>
+        public static void ProcessXmlBlockFromFile<T>(string filePath, Action<T?> manipulateObject)
+        {
+            string xmlContent = File.ReadAllText(filePath);
+
+            string propertyName = typeof(T).Name;
+
+            string? block = ExtractXmlBlock(xmlContent, propertyName);
+
+            if (string.IsNullOrEmpty(block))
+            {
+                throw new InvalidOperationException("The specified XML block was not found: " + propertyName);
+            }
+
+            T? obj = Deserialize<T>(block);
+
+            manipulateObject(obj);
+
+            // TODO: exception for null object
+
+            string newBlock = Serialize(obj);
+
+            string newXmlContent = xmlContent.Replace(block, newBlock);
+
+            File.WriteAllText(filePath, newXmlContent);
+        }
+
+        /// <summary>
+        /// Extracts a specific XML block from within an XML emcoded string
+        /// </summary>
+        /// <param name="xmlContent">The XML string you are manipulating</param>
+        /// <param name="propertyName">The property name you wish to extract</param>
+        /// <returns>A substring containing the target XML block</returns>
+        public static string? ExtractXmlBlock(string xmlContent, string propertyName)
+        {
+            string startTag = "<" + propertyName + ">";
+            string endTag = "</" + propertyName + ">";
+
+            int startIndex = xmlContent.IndexOf(startTag);
+            if (startIndex == -1)
+            {
+                return null;
+            }
+            int endIndex = xmlContent.IndexOf(endTag, startIndex) + endTag.Length;
+            if (endIndex == -1)
+            {
+                return null;
+            }
+            return xmlContent.Substring(startIndex, endIndex - startIndex);
+        }
     }
 
     /// <summary>
