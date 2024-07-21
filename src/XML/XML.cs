@@ -1,4 +1,5 @@
 using System.Text;
+using System.Xml;
 using System.Xml.Serialization;
 
 namespace jmsudar.DotNet.Xml
@@ -17,7 +18,7 @@ namespace jmsudar.DotNet.Xml
         /// <returns>Serialized XML text representing your object</returns>
         /// <exception cref="ArgumentNullException">Thrown if toSerialize is passed in as null</exception>
         /// <exception cref="XmlSerializationException">Custom exception surfacing any errors that occur during runtime</exception>
-        public static string Serialize<T>(T toSerialize, XmlSerializerNamespaces? namespaces = null)
+        public static string Serialize<T>(T toSerialize, bool removeEmptyNodes = false, XmlSerializerNamespaces? namespaces = null)
         {
             // Error if the object to serialize is null
             if (toSerialize == null) throw new ArgumentNullException(nameof(toSerialize), "Input object to serialize cannot be null.");
@@ -32,7 +33,14 @@ namespace jmsudar.DotNet.Xml
                     serializer.Serialize(writer, toSerialize, namespaces);
                 }
 
-                return builder.ToString();
+                string xmlContent = builder.ToString();
+
+                if (removeEmptyNodes)
+                {
+                    xmlContent = RemoveEmptyXml(xmlContent);
+                }
+
+                return xmlContent;
             }
             catch (InvalidOperationException ex)
             {
@@ -47,6 +55,49 @@ namespace jmsudar.DotNet.Xml
         }
 
         /// <summary>
+        /// Sanitizes XML content to remove any empty nodes
+        /// </summary>
+        /// <param name="xmlContent">The XML content to sanitize</param>
+        /// <returns>The provided XML minus any empty nodes</returns>
+        private static string RemoveEmptyXml(string xmlContent)
+        {
+            var doc = new XmlDocument();
+            doc.LoadXml(xmlContent);
+
+            if (doc.DocumentElement != null)
+            {
+                RemoveEmptyNodes(doc.DocumentElement);
+            }
+
+            using (var stringWriter = new StringWriter())
+            using (var xmlTextWriter = XmlWriter.Create(stringWriter))
+            {
+                doc.WriteTo(xmlTextWriter);
+                xmlTextWriter.Flush();
+                return stringWriter.GetStringBuilder().ToString();
+            }
+        }
+
+        /// <summary>
+        /// Performs a removal in place of any empty XML nodes
+        /// </summary>
+        /// <param name="node">The XML node being assessed</param>
+        private static void RemoveEmptyNodes(XmlNode node)
+        {
+            if (node is XmlElement element && string.IsNullOrWhiteSpace(element.InnerXml))
+            {
+                element.ParentNode?.RemoveChild(element);
+            }
+            else
+            {
+                foreach (XmlNode child in node.ChildNodes)
+                {
+                    RemoveEmptyNodes(child);
+                }
+            }
+        }
+
+        /// <summary>
         /// Serializes an object to a given file path
         /// </summary>
         /// <typeparam name="T">The generic object type to serialize from</typeparam>
@@ -55,14 +106,14 @@ namespace jmsudar.DotNet.Xml
         /// <param name="namespaces">Optional XML serializer namespaces to include</param>
         /// <exception cref="ArgumentNullException">Thrown if the destination file path is passed in as null</exception>
         /// <exception cref="XmlSerializationException">Catches any IO errors</exception>
-        public static void SerializeToFile<T>(T toSerialize, string filePath, XmlSerializerNamespaces? namespaces = null)
+        public static void SerializeToFile<T>(T toSerialize, string filePath, bool removeEmptyNodes = true, XmlSerializerNamespaces? namespaces = null)
         {
             // Error if no file path is provided
             if (string.IsNullOrEmpty(filePath)) throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 
             try
             {
-                string serializedData = Serialize(toSerialize, namespaces);
+                string serializedData = Serialize(toSerialize, removeEmptyNodes, namespaces);
                 File.WriteAllText(filePath, serializedData, Encoding.UTF8);
             }
             catch (IOException ex)

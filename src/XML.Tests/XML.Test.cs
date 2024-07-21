@@ -11,7 +11,7 @@ public class XMLTests
     public class TestObject
     {
         public string? Name { get; set; }
-        public int Value { get; set; }
+        public int? Value { get; set; }
     }
 
     //Disable at the beginning of testing
@@ -168,8 +168,52 @@ public class XMLTests
         Assert.IsNull(block);
     }
 
+    [TestMethod]
+    public void Serialize_WithRemoveEmptyNodes_RemovesEmptyElements()
+    {
+        var testObject = new TestObject { Name = "Test", Value = null };
+
+        string result = XML.Serialize(testObject, removeEmptyNodes: true);
+
+        Assert.IsNotNull(result);
+        StringAssert.Contains(result, "<Name>Test</Name>");
+        Assert.IsFalse(result.Contains("xsi:nil=\"true\""));
+    }
+
+    [TestMethod]
+    public void Serialize_WithoutRemoveEmptyNodes_KeepsEmptyElements()
+    {
+        var testObject = new TestObject { Name = "Test", Value = null };
+
+        string result = XML.Serialize(testObject, removeEmptyNodes: false);
+
+        Assert.IsNotNull(result);
+        StringAssert.Contains(result, "<Name>Test</Name>");
+        Assert.IsTrue(result.Contains("xsi:nil=\"true\""));
+    }
+
+    [TestMethod]
+    public void Serialize_WithAllEmptyNodes_RemovesAllEmptyElements()
+    {
+        var testObject = new TestObject { Name = null, Value = null };
+
+        string result = XML.Serialize(testObject, removeEmptyNodes: true);
+
+        Assert.IsNotNull(result);
+        Assert.IsFalse(result.Contains("xsi:nil=\"true\""));
+    }
+
+    [TestMethod]
+    public void Serialize_WithNullValues_ThrowsArgumentNullException()
+    {
+        // Disable nullable warning given that this is explicitly testing null
+        #pragma warning disable CS8625
+        Assert.ThrowsException<ArgumentNullException>(() => XML.Serialize<TestObject>(null, removeEmptyNodes: true));
+        #pragma warning restore CS8625
+    }
+
     //Re-enable at the end of testing
-#pragma warning restore CS8600 // Suppressing CS8600
-#pragma warning restore CS8602 // Suppressing CS8602
-#pragma warning restore CS8629 // Suppressing CS8629
+    #pragma warning restore CS8600 // Suppressing CS8600
+    #pragma warning restore CS8602 // Suppressing CS8602
+    #pragma warning restore CS8629 // Suppressing CS8629
 }
