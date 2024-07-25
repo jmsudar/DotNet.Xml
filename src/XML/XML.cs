@@ -103,6 +103,7 @@ namespace jmsudar.DotNet.Xml
         /// <typeparam name="T">The generic object type to serialize from</typeparam>
         /// <param name="toSerialize">The object you are serializing</param>
         /// <param name="filePath">The file path location for the serialized XML</param>
+        /// <param name="removeEmptyNodes">Whether or not to remove empty nodes, defaults to true</param>
         /// <param name="namespaces">Optional XML serializer namespaces to include</param>
         /// <exception cref="ArgumentNullException">Thrown if the destination file path is passed in as null</exception>
         /// <exception cref="XmlSerializationException">Catches any IO errors</exception>
