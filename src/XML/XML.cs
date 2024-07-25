@@ -18,7 +18,7 @@ namespace jmsudar.DotNet.Xml
         /// <returns>Serialized XML text representing your object</returns>
         /// <exception cref="ArgumentNullException">Thrown if toSerialize is passed in as null</exception>
         /// <exception cref="XmlSerializationException">Custom exception surfacing any errors that occur during runtime</exception>
-        public static string Serialize<T>(T toSerialize, bool removeEmptyNodes = false, XmlSerializerNamespaces? namespaces = null)
+        public static string Serialize<T>(T toSerialize, bool removeEmptyNodes = true, XmlSerializerNamespaces? namespaces = null)
         {
             // Error if the object to serialize is null
             if (toSerialize == null) throw new ArgumentNullException(nameof(toSerialize), "Input object to serialize cannot be null.");
@@ -103,6 +103,7 @@ namespace jmsudar.DotNet.Xml
         /// <typeparam name="T">The generic object type to serialize from</typeparam>
         /// <param name="toSerialize">The object you are serializing</param>
         /// <param name="filePath">The file path location for the serialized XML</param>
+        /// <param name="removeEmptyNodes">Whether or not to remove empty nodes, defaults to true</param>
         /// <param name="namespaces">Optional XML serializer namespaces to include</param>
         /// <exception cref="ArgumentNullException">Thrown if the destination file path is passed in as null</exception>
         /// <exception cref="XmlSerializationException">Catches any IO errors</exception>
