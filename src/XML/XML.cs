@@ -18,7 +18,7 @@ namespace jmsudar.DotNet.Xml
         /// <returns>Serialized XML text representing your object</returns>
         /// <exception cref="ArgumentNullException">Thrown if toSerialize is passed in as null</exception>
         /// <exception cref="XmlSerializationException">Custom exception surfacing any errors that occur during runtime</exception>
-        public static string Serialize<T>(T toSerialize, bool removeEmptyNodes = false, XmlSerializerNamespaces? namespaces = null)
+        public static string Serialize<T>(T toSerialize, bool removeEmptyNodes = true, XmlSerializerNamespaces? namespaces = null)
         {
             // Error if the object to serialize is null
             if (toSerialize == null) throw new ArgumentNullException(nameof(toSerialize), "Input object to serialize cannot be null.");
