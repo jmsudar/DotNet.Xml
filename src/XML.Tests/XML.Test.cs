@@ -176,7 +176,6 @@ public class XMLTests
         string result = XML.Serialize(testObject, removeEmptyNodes: true);
 
         Assert.IsNotNull(result);
-        Console.WriteLine(result);
         StringAssert.Contains(result, "<Name>Test</Name>");
         Assert.IsFalse(result.Contains("xsi:nil=\"true\""));
     }
@@ -189,7 +188,6 @@ public class XMLTests
         string result = XML.Serialize(testObject, removeEmptyNodes: false);
 
         Assert.IsNotNull(result);
-        Console.WriteLine(result);
         StringAssert.Contains(result, "<Name>Test</Name>");
         Assert.IsTrue(result.Contains("xsi:nil=\"true\""));
     }
@@ -202,7 +200,6 @@ public class XMLTests
         string result = XML.Serialize(testObject, removeEmptyNodes: true);
 
         Assert.IsNotNull(result);
-        Console.WriteLine(result);
         Assert.IsFalse(result.Contains("xsi:nil=\"true\""));
     }
 
