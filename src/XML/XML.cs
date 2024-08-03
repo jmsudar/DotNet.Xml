@@ -18,7 +18,7 @@ namespace jmsudar.DotNet.Xml
         /// <returns>Serialized XML text representing your object</returns>
         /// <exception cref="ArgumentNullException">Thrown if toSerialize is passed in as null</exception>
         /// <exception cref="XmlSerializationException">Custom exception surfacing any errors that occur during runtime</exception>
-        public static string Serialize<T>(T toSerialize, bool removeEmptyNodes = true, XmlSerializerNamespaces? namespaces = null)
+        public static string Serialize<T>(T toSerialize, bool removeEmptyNodes = true, bool prettyPrint = true, XmlSerializerNamespaces? namespaces = null)
         {
             // Error if the object to serialize is null
             if (toSerialize == null) throw new ArgumentNullException(nameof(toSerialize), "Input object to serialize cannot be null.");
@@ -39,6 +39,9 @@ namespace jmsudar.DotNet.Xml
                 {
                     xmlContent = RemoveEmptyXml(xmlContent);
                 }
+
+                // Apply XML writer settings to pretty-print if true
+                xmlContent = ApplyXmlWriterSettings(xmlContent, prettyPrint);
 
                 return xmlContent;
             }
@@ -82,18 +85,60 @@ namespace jmsudar.DotNet.Xml
         /// Performs a removal in place of any empty XML nodes
         /// </summary>
         /// <param name="node">The XML node being assessed</param>
-        private static void RemoveEmptyNodes(XmlNode node)
+        private static void RemoveEmptyNodes(XmlNode ?node)
         {
-            if (node is XmlElement element && string.IsNullOrWhiteSpace(element.InnerXml))
+            // Check for null before proceeding
+            if (node == null)
             {
-                element.ParentNode?.RemoveChild(element);
+                return;
             }
-            else
+
+            for (int i = node.ChildNodes.Count - 1; i >= 0; i--)
             {
-                foreach (XmlNode child in node.ChildNodes)
+                var childNode = node.ChildNodes[i];
+                if (childNode is XmlElement element)
                 {
-                    RemoveEmptyNodes(child);
+                    bool isEmpty = string.IsNullOrWhiteSpace(element.InnerXml)
+                        && !element.HasAttributes;
+                    bool isNil = element.HasAttribute("xsi:nil");
+
+                    if (isEmpty || isNil)
+                    {
+                        node.RemoveChild(childNode);
+                    }
+                    else
+                    {
+                        RemoveEmptyNodes(childNode);
+                    }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Applies XML writer settings to ensure pretty-print formatting
+        /// </summary>
+        /// <param name="xmlContent">The XML content to format</param>
+        /// <param name="prettyPrint">Specifies whether to pretty-print the XML</param>
+        /// <returns>The formatted XML content</returns>
+        private static string ApplyXmlWriterSettings(string xmlContent, bool prettyPrint)
+        {
+            var settings = new XmlWriterSettings
+            {
+                Indent = prettyPrint,
+                IndentChars = "  ",
+                NewLineChars = Environment.NewLine,
+                NewLineHandling = NewLineHandling.Replace
+            };
+
+            var doc = new XmlDocument();
+            doc.LoadXml(xmlContent);
+
+            using (var stringWriter = new StringWriter())
+            using (var xmlTextWriter = XmlWriter.Create(stringWriter, settings))
+            {
+                doc.WriteTo(xmlTextWriter);
+                xmlTextWriter.Flush();
+                return stringWriter.GetStringBuilder().ToString();
             }
         }
 
@@ -107,14 +152,14 @@ namespace jmsudar.DotNet.Xml
         /// <param name="namespaces">Optional XML serializer namespaces to include</param>
         /// <exception cref="ArgumentNullException">Thrown if the destination file path is passed in as null</exception>
         /// <exception cref="XmlSerializationException">Catches any IO errors</exception>
-        public static void SerializeToFile<T>(T toSerialize, string filePath, bool removeEmptyNodes = true, XmlSerializerNamespaces? namespaces = null)
+        public static void SerializeToFile<T>(T toSerialize, string filePath, bool removeEmptyNodes = true, bool prettyPrint = true, XmlSerializerNamespaces? namespaces = null)
         {
             // Error if no file path is provided
             if (string.IsNullOrEmpty(filePath)) throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 
             try
             {
-                string serializedData = Serialize(toSerialize, removeEmptyNodes, namespaces);
+                string serializedData = Serialize(toSerialize, removeEmptyNodes, prettyPrint, namespaces);
                 File.WriteAllText(filePath, serializedData, Encoding.UTF8);
             }
             catch (IOException ex)
