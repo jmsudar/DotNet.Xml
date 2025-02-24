@@ -18,7 +18,7 @@ namespace jmsudar.DotNet.Xml
         /// <returns>Serialized XML text representing your object</returns>
         /// <exception cref="ArgumentNullException">Thrown if toSerialize is passed in as null</exception>
         /// <exception cref="XmlSerializationException">Custom exception surfacing any errors that occur during runtime</exception>
-        public static string Serialize<T>(T toSerialize, bool removeEmptyNodes = true, bool prettyPrint = true, XmlSerializerNamespaces? namespaces = null)
+        public static string Serialize<T>(T toSerialize, bool removeEmptyNodes = true, bool prettyPrint = true, bool omitXmlDeclaration = true, XmlSerializerNamespaces? namespaces = null)
         {
             // Error if the object to serialize is null
             if (toSerialize == null) throw new ArgumentNullException(nameof(toSerialize), "Input object to serialize cannot be null.");
@@ -40,8 +40,11 @@ namespace jmsudar.DotNet.Xml
                     xmlContent = RemoveEmptyXml(xmlContent);
                 }
 
-                // Apply XML writer settings to pretty-print if true
-                xmlContent = ApplyXmlWriterSettings(xmlContent, prettyPrint);
+                // Apply XML writer settings to pretty-print formatting
+                xmlContent = ApplyXmlWriterSettings(xmlContent, prettyPrint, omitXmlDeclaration);
+
+                // Remove namespaces if they were implicitly added
+                xmlContent = RemoveDefaultNamespaces(xmlContent);
 
                 return xmlContent;
             }
@@ -120,14 +123,15 @@ namespace jmsudar.DotNet.Xml
         /// <param name="xmlContent">The XML content to format</param>
         /// <param name="prettyPrint">Specifies whether to pretty-print the XML</param>
         /// <returns>The formatted XML content</returns>
-        private static string ApplyXmlWriterSettings(string xmlContent, bool prettyPrint)
+        private static string ApplyXmlWriterSettings(string xmlContent, bool prettyPrint, bool omitXmlDeclaration)
         {
             var settings = new XmlWriterSettings
             {
                 Indent = prettyPrint,
-                IndentChars = "  ",
+                IndentChars = "\t",
                 NewLineChars = Environment.NewLine,
-                NewLineHandling = NewLineHandling.Replace
+                NewLineHandling = NewLineHandling.Replace,
+                OmitXmlDeclaration = omitXmlDeclaration
             };
 
             var doc = new XmlDocument();
@@ -135,6 +139,31 @@ namespace jmsudar.DotNet.Xml
 
             using (var stringWriter = new StringWriter())
             using (var xmlTextWriter = XmlWriter.Create(stringWriter, settings))
+            {
+                doc.WriteTo(xmlTextWriter);
+                xmlTextWriter.Flush();
+                return stringWriter.GetStringBuilder().ToString();
+            }
+        }
+
+        /// <summary>
+        /// Removes default namespaces from an XML string
+        /// </summary>
+        /// <param name="xmlContent">The XML content to sanitize</param>
+        /// <returns>An XML content minus any default namespaces</returns>
+        private static string RemoveDefaultNamespaces(string xmlContent)
+        {
+            var doc = new XmlDocument();
+            doc.LoadXml(xmlContent);
+
+            if (doc.DocumentElement != null)
+            {
+                doc.DocumentElement.RemoveAttribute("xmlns:xsi");
+                doc.DocumentElement.RemoveAttribute("xmlns:xsd");
+            }
+
+            using (var stringWriter = new StringWriter())
+            using (var xmlTextWriter = XmlWriter.Create(stringWriter))
             {
                 doc.WriteTo(xmlTextWriter);
                 xmlTextWriter.Flush();
@@ -152,14 +181,14 @@ namespace jmsudar.DotNet.Xml
         /// <param name="namespaces">Optional XML serializer namespaces to include</param>
         /// <exception cref="ArgumentNullException">Thrown if the destination file path is passed in as null</exception>
         /// <exception cref="XmlSerializationException">Catches any IO errors</exception>
-        public static void SerializeToFile<T>(T toSerialize, string filePath, bool removeEmptyNodes = true, bool prettyPrint = true, XmlSerializerNamespaces? namespaces = null)
+        public static void SerializeToFile<T>(T toSerialize, string filePath, bool removeEmptyNodes = true, bool prettyPrint = true, bool omitXmlDeclaration = true, XmlSerializerNamespaces? namespaces = null)
         {
             // Error if no file path is provided
             if (string.IsNullOrEmpty(filePath)) throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 
             try
             {
-                string serializedData = Serialize(toSerialize, removeEmptyNodes, prettyPrint, namespaces);
+                string serializedData = Serialize(toSerialize, removeEmptyNodes, prettyPrint, omitXmlDeclaration, namespaces);
                 File.WriteAllText(filePath, serializedData, Encoding.UTF8);
             }
             catch (IOException ex)
