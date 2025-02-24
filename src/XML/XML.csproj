@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>jmsudar.DotNet.Xml</PackageId>
-    <Version>1.6.0</Version>
+    <Version>1.7.0</Version>
     <Authors>JMSudar</Authors>
     <Description>.NET 6 native utilities for XML object manipulation</Description>
     <PackageTags>xml;serialization;deserialization</PackageTags>
