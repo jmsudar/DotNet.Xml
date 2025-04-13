@@ -20,17 +20,29 @@ namespace jmsudar.DotNet.Xml
         /// <exception cref="XmlSerializationException">Custom exception surfacing any errors that occur during runtime</exception>
         public static string Serialize<T>(T toSerialize, bool removeEmptyNodes = true, bool prettyPrint = true, bool omitXmlDeclaration = true, XmlSerializerNamespaces? namespaces = null)
         {
-            // Error if the object to serialize is null
-            if (toSerialize == null) throw new ArgumentNullException(nameof(toSerialize), "Input object to serialize cannot be null.");
+            if (toSerialize == null)
+                throw new ArgumentNullException(nameof(toSerialize), "Input object to serialize cannot be null.");
 
             try
             {
                 var serializer = new XmlSerializer(typeof(T));
+
+                var settings = new XmlWriterSettings
+                {
+                    Indent = prettyPrint,
+                    IndentChars = "\t",
+                    NewLineChars = Environment.NewLine,
+                    NewLineHandling = NewLineHandling.Replace,
+                    OmitXmlDeclaration = omitXmlDeclaration,
+                    Encoding = new UTF8Encoding(false) // no BOM
+                };
+
                 var builder = new StringBuilder();
 
-                using (var writer = new Utf8StringWriter(builder))
+                using (var stringWriter = new StringWriter(builder))
+                using (var xmlWriter = XmlWriter.Create(stringWriter, settings))
                 {
-                    serializer.Serialize(writer, toSerialize, namespaces);
+                    serializer.Serialize(xmlWriter, toSerialize, namespaces);
                 }
 
                 string xmlContent = builder.ToString();
@@ -40,24 +52,42 @@ namespace jmsudar.DotNet.Xml
                     xmlContent = RemoveEmptyXml(xmlContent);
                 }
 
-                // Apply XML writer settings to pretty-print formatting
-                xmlContent = ApplyXmlWriterSettings(xmlContent, prettyPrint, omitXmlDeclaration);
-
-                // Remove namespaces if they were implicitly added
                 xmlContent = RemoveDefaultNamespaces(xmlContent);
+
+                if (omitXmlDeclaration)
+                {
+                    xmlContent = RemoveXmlDeclaration(xmlContent);
+                }
 
                 return xmlContent;
             }
             catch (InvalidOperationException ex)
             {
-                // Handle any attempted invalid operations
                 throw new XmlSerializationException($"Invalid operation attempted while serializing object to XML: {ex.Message}", ex.InnerException);
             }
             catch (Exception ex)
             {
-                // Handle other issues
                 throw new XmlSerializationException($"Unexpected error: {ex.Message}", ex.InnerException);
             }
+        }
+
+        /// <summary>
+        /// Removes the XML declaration from the beginning of an XML string
+        /// </summary>
+        /// <param name="xmlContent">The XML content to sanitize</param>
+        /// <returns>The provided XML minus the XML declaration</returns>
+        private static string RemoveXmlDeclaration(string xmlContent)
+        {
+            if (xmlContent.StartsWith("<?xml"))
+            {
+                int endOfDecl = xmlContent.IndexOf("?>");
+                if (endOfDecl != -1)
+                {
+                    return xmlContent.Substring(endOfDecl + 2).TrimStart();
+                }
+            }
+
+            return xmlContent;
         }
 
         /// <summary>
