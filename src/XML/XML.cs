@@ -49,10 +49,10 @@ namespace jmsudar.DotNet.Xml
 
                 if (removeEmptyNodes)
                 {
-                    xmlContent = RemoveEmptyXml(xmlContent);
+                    xmlContent = RemoveEmptyXml(xmlContent, settings);
                 }
 
-                xmlContent = RemoveDefaultNamespaces(xmlContent);
+                xmlContent = RemoveDefaultNamespaces(xmlContent, settings);
 
                 if (omitXmlDeclaration)
                 {
@@ -95,7 +95,7 @@ namespace jmsudar.DotNet.Xml
         /// </summary>
         /// <param name="xmlContent">The XML content to sanitize</param>
         /// <returns>The provided XML minus any empty nodes</returns>
-        private static string RemoveEmptyXml(string xmlContent)
+        private static string RemoveEmptyXml(string xmlContent, XmlWriterSettings settings)
         {
             var doc = new XmlDocument();
             doc.LoadXml(xmlContent);
@@ -106,7 +106,7 @@ namespace jmsudar.DotNet.Xml
             }
 
             using (var stringWriter = new StringWriter())
-            using (var xmlTextWriter = XmlWriter.Create(stringWriter))
+            using (var xmlTextWriter = XmlWriter.Create(stringWriter, settings))
             {
                 doc.WriteTo(xmlTextWriter);
                 xmlTextWriter.Flush();
@@ -148,40 +148,11 @@ namespace jmsudar.DotNet.Xml
         }
 
         /// <summary>
-        /// Applies XML writer settings to ensure pretty-print formatting
-        /// </summary>
-        /// <param name="xmlContent">The XML content to format</param>
-        /// <param name="prettyPrint">Specifies whether to pretty-print the XML</param>
-        /// <returns>The formatted XML content</returns>
-        private static string ApplyXmlWriterSettings(string xmlContent, bool prettyPrint, bool omitXmlDeclaration)
-        {
-            var settings = new XmlWriterSettings
-            {
-                Indent = prettyPrint,
-                IndentChars = "\t",
-                NewLineChars = Environment.NewLine,
-                NewLineHandling = NewLineHandling.Replace,
-                OmitXmlDeclaration = omitXmlDeclaration
-            };
-
-            var doc = new XmlDocument();
-            doc.LoadXml(xmlContent);
-
-            using (var stringWriter = new StringWriter())
-            using (var xmlTextWriter = XmlWriter.Create(stringWriter, settings))
-            {
-                doc.WriteTo(xmlTextWriter);
-                xmlTextWriter.Flush();
-                return stringWriter.GetStringBuilder().ToString();
-            }
-        }
-
-        /// <summary>
         /// Removes default namespaces from an XML string
         /// </summary>
         /// <param name="xmlContent">The XML content to sanitize</param>
         /// <returns>An XML content minus any default namespaces</returns>
-        private static string RemoveDefaultNamespaces(string xmlContent)
+        private static string RemoveDefaultNamespaces(string xmlContent, XmlWriterSettings settings)
         {
             var doc = new XmlDocument();
             doc.LoadXml(xmlContent);
@@ -193,7 +164,7 @@ namespace jmsudar.DotNet.Xml
             }
 
             using (var stringWriter = new StringWriter())
-            using (var xmlTextWriter = XmlWriter.Create(stringWriter))
+            using (var xmlTextWriter = XmlWriter.Create(stringWriter, settings))
             {
                 doc.WriteTo(xmlTextWriter);
                 xmlTextWriter.Flush();
